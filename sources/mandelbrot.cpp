@@ -44,3 +44,22 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
         }
     }
 }
+
+static uint32_t numToColor(const uint32_t num)
+{
+    uint8_t red   = 256 - num;
+    uint8_t green = 0;
+    uint8_t blue  = 0;
+    uint8_t alpha = 255;
+
+    // it is rgba in sfml
+    uint32_t color = (alpha << 24) | (blue << 16) | (green << 8) | red;
+
+    return color;
+}
+
+void numsToColor(uint32_t * nums, uint32_t * colors, size_t len)
+{
+    for (size_t num_index = 0; num_index < len; num_index++)
+        colors[num_index] = numToColor(nums[num_index]);
+}
