@@ -1,21 +1,23 @@
-FILENAME = mandlebrot
+FILENAME = mandelbrot
 OBJDIR 		   = Obj/
 SRCDIR 		   = sources/
 HEADDIR 	   = headers/
 
 CC = g++
 
-c_sources 	= main.c
+CFLAGS = -I$(HEADDIR) -Wall -Wextra
+
+c_sources 	= main.cpp mandelbrot.cpp window_handler.cpp
 c_src_w_dir = $(addprefix $(SRCDIR), $(c_sources))
-headers 	=
+headers 	= $(HEADDIR)mandelbrot.h
 
-C_OBJS   = $(addprefix $(OBJDIR), $(addsuffix .o, $(basename $(c_sources))))
+C_OBJS = $(addprefix $(OBJDIR), $(c_sources:.cpp=.o))
 
-$(FILENAME): $(ASM_OBJS) $(C_OBJS)
-	gcc -no-pie -o $@ $^
+$(FILENAME): $(C_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ -lsfml-graphics -lsfml-window -lsfml-system
 
-$(C_OBJS):	$(c_src_w_dir) $(headers)
-	mkdir -p $(OBJDIR)
+$(OBJDIR)%.o: $(SRCDIR)%.cpp $(headers)
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -g3 -Og -c $< -o $@
 
 dump:
