@@ -5,8 +5,15 @@
 
 #include "mandelbrot.h"
 
+const float   POS_CHANGE_COEF = 0.1;
+const float SCALE_CHANGE_COEF = 1.1;
+
 void runWindow(const uint32_t width, const uint32_t height)
 {
+    float scale = 2./(1440);
+    float center_x = -0.5,
+          center_y = 0.;
+
     sf::RenderWindow window(sf::VideoMode(width, height), "Mandelbrot");
     window.setVerticalSyncEnabled(true);
     window.setFramerateLimit(60);
@@ -20,7 +27,6 @@ void runWindow(const uint32_t width, const uint32_t height)
     uint32_t * num_pixels   = (uint32_t *)calloc(width * height, sizeof(*num_pixels));
     uint32_t * color_pixels = (uint32_t *)calloc(width * height, sizeof(*color_pixels));
 
-
     while (window.isOpen()) {
         sf::Event event;
 
@@ -28,9 +34,41 @@ void runWindow(const uint32_t width, const uint32_t height)
             if (event.type == sf::Event::Closed){
                 window.close();
             }
+
+            if (event.type == sf::Event::KeyPressed){
+                float step = width * scale * POS_CHANGE_COEF;
+
+                switch(event.key.code){
+                    case sf::Keyboard::Up:
+                        center_y += step;
+                        break;
+
+                    case sf::Keyboard::Down:
+                        center_y -= step;
+                        break;
+
+                    case sf::Keyboard::Left:
+                        center_x -= step;
+                        break;
+
+                    case sf::Keyboard::Right:
+                        center_x += step;
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            if (event.type == sf::Event::MouseWheelScrolled){
+                scale = (event.mouseWheelScroll.delta > 0) ?
+                    scale / SCALE_CHANGE_COEF :
+                    scale * SCALE_CHANGE_COEF;
+            }
+
         }
 
-        calcMandelbrot(num_pixels, width, height, -2, 2, -1.5, 1.5);
+        calcCenteredMandelbrot(num_pixels, width, height, center_x, center_y, scale);
         numsToColor(num_pixels, color_pixels, width * height);
 
         mandelbrot_texture.update((uint8_t *)color_pixels);

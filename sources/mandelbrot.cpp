@@ -13,8 +13,10 @@ const float MAX_R2   = 100.f;
 // y_new = 2xy + y0
 
 void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
-                    const float left_x, const float right_x, const float bottom_y, const float top_y)
+                    const float left_x, const float right_x, const float bottom_y)
 {
+    const float top_y = ((right_x - left_x) * sc_height) / sc_width + bottom_y;
+
     const float dx = (right_x - left_x) / sc_width;
     const float dy = (top_y - bottom_y) / sc_height;
 
@@ -45,10 +47,21 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
     }
 }
 
+void calcCenteredMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
+                            const float center_x, const float center_y, const float scale)
+{
+    float left_x  = center_x - sc_width * scale / 2;
+    float right_x = sc_width * scale / 2 + center_x;
+
+    float bottom_y = center_y - sc_height * scale / 2;
+
+    calcMandelbrot(pixels, sc_width, sc_height, left_x, right_x, bottom_y);
+}
+
 static uint32_t numToColor(const uint32_t num)
 {
     uint8_t red   = 256 - num;
-    uint8_t green = 0;
+    uint8_t green = 5*num;
     uint8_t blue  = 0;
     uint8_t alpha = 255;
 
