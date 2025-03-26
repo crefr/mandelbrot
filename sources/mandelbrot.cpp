@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "mandelbrot.h"
 
@@ -60,9 +61,13 @@ void calcCenteredMandelbrot(uint32_t * pixels, const uint32_t sc_width, const ui
 
 static uint32_t numToColor(const uint32_t num)
 {
+    if (num == 256)
+        return 0;
+
     uint8_t red   = 256 - num;
-    uint8_t green = 5*num;
-    uint8_t blue  = 0;
+    uint8_t green = (uint8_t)(128 + 127.* sinf32(10000./(num + 200)));
+    uint8_t blue  = (uint8_t)(40. * logf(num));
+
     uint8_t alpha = 255;
 
     // it is rgba in sfml

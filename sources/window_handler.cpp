@@ -10,7 +10,7 @@ const float SCALE_CHANGE_COEF = 1.1;
 
 void runWindow(const uint32_t width, const uint32_t height)
 {
-    float scale = 2./(1440);
+    float scale = 2./(width);
     float center_x = -0.5,
           center_y = 0.;
 
@@ -40,11 +40,11 @@ void runWindow(const uint32_t width, const uint32_t height)
 
                 switch(event.key.code){
                     case sf::Keyboard::Up:
-                        center_y += step;
+                        center_y -= step;
                         break;
 
                     case sf::Keyboard::Down:
-                        center_y -= step;
+                        center_y += step;
                         break;
 
                     case sf::Keyboard::Left:
