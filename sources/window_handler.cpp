@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <SFML/Graphics.hpp>
 
@@ -68,7 +69,12 @@ void runWindow(const uint32_t width, const uint32_t height)
 
         }
 
+        clock_t calc_start = clock();
         calcCenteredMandelbrot(num_pixels, width, height, center_x, center_y, scale);
+        clock_t calc_end   = clock();
+
+        printf("one frame calc time = %lf ms\n", (double)(calc_end - calc_start) / CLOCKS_PER_SEC * 1000);
+
         numsToColor(num_pixels, color_pixels, width * height);
 
         mandelbrot_texture.update((uint8_t *)color_pixels);
