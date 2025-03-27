@@ -18,7 +18,7 @@ $(FILENAME): $(C_OBJS)
 
 $(OBJDIR)%.o: $(SRCDIR)%.cpp $(headers)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -g3 -Og -c $< -o $@
+	$(CC) $(CFLAGS) -O3 -c $< -o $@
 
 dump:
 	objdump -d -Mintel $(FILENAME) > $(basename $(FILENAME)).disasm

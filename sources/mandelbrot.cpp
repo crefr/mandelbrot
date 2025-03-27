@@ -5,6 +5,8 @@
 
 #include "mandelbrot.h"
 
+#define PACK_SIZE 4
+
 const uint32_t MAX_N = 256;
 const float MAX_R2   = 100.f;
 
@@ -22,29 +24,50 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
     const float dy = (top_y - bottom_y) / sc_height;
 
     for (uint32_t iy = 0; iy < sc_height; iy++){
-        float y0 = bottom_y + iy * dy;
+        float y0[PACK_SIZE] = {};
+        for (size_t i = 0; i < PACK_SIZE; i++) y0[i] = bottom_y + iy * dy;
 
-        for (uint32_t ix = 0; ix < sc_width; ix++){
-            float x0 = left_x + ix * dx;
+        for (uint32_t ix = 0; ix < sc_width; ix += PACK_SIZE){
+            float x0[PACK_SIZE] = {};
+            for (size_t i = 0; i < PACK_SIZE; i++) x0[i] = left_x + (ix + i)*dx;
 
-            float x = x0;
-            float y = y0;
+            float x[PACK_SIZE] = {};
+            for (size_t i = 0; i < PACK_SIZE; i++) x[i] = x0[i];
 
-            uint32_t n = 0;
-            for (; n < MAX_N; n++){
-                float x2   = x * x;
-                float y2   = y * y;
-                float _2xy = 2 * x * y;
+            float y[PACK_SIZE] = {};
+            for (size_t i = 0; i < PACK_SIZE; i++) y[i] = y0[i];
 
-                if (x2 + y2 > MAX_R2)
+            int n[PACK_SIZE] = {0};
+
+            for (uint32_t iteration = 0; iteration < MAX_N; iteration++){
+                float x2[PACK_SIZE] = {};
+                for (size_t i = 0; i < PACK_SIZE; i++) x2[i] = x[i] * x[i];
+
+                float y2[PACK_SIZE] = {};
+                for (size_t i = 0; i < PACK_SIZE; i++) y2[i] = y[i] * y[i];
+
+                float _2xy[PACK_SIZE] = {};
+                for (size_t i = 0; i < PACK_SIZE; i++) _2xy[i] = 2 * x[i] * y[i];
+
+                int cmp_res[PACK_SIZE] = {};
+                for (size_t i = 0; i < PACK_SIZE; i++) cmp_res[i] = (x2[i] + y2[i] < MAX_R2) ? 1 : 0;
+
+                for (size_t i = 0; i < PACK_SIZE; i++) n[i] += cmp_res[i];
+
+                int mask = 0;
+                for (size_t i = 0; i < PACK_SIZE; i++){
+                    mask <<= 1;
+                    mask += cmp_res[i];
+                }
+
+                if (!mask)
                     break;
 
-                x = x2 - y2 + x0;
-                y = _2xy + y0;
-
+                for (size_t i = 0; i < PACK_SIZE; i++) x[i] = x2[i] - y2[i] + x0[i];
+                for (size_t i = 0; i < PACK_SIZE; i++) y[i] = _2xy[i] + y0[i];
             }
 
-            pixels[iy * sc_width + ix] = n;
+            for (size_t i = 0; i < PACK_SIZE; i++) pixels[iy * sc_width + ix + i] = n[i];
         }
     }
 }
