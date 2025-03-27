@@ -7,8 +7,8 @@
 #include "mandelbrot.h"
 #include "window_handler.h"
 
-const uint32_t SC_WIDTH  = 800;
-const uint32_t SC_HEIGHT = 600;
+const uint32_t SC_WIDTH  = 2560;
+const uint32_t SC_HEIGHT = 1440;
 
 int main(int argc, char ** argv)
 {

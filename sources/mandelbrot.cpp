@@ -5,7 +5,7 @@
 
 #include "mandelbrot.h"
 
-#define PACK_SIZE 4
+#define PACK_SIZE 32
 
 const uint32_t MAX_N = 256;
 const float MAX_R2   = 100.f;

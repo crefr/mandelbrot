@@ -5,7 +5,7 @@ HEADDIR 	   = headers/
 
 CC = g++
 
-CFLAGS = -I$(HEADDIR) -Wall -Wextra
+CFLAGS = -I$(HEADDIR) -Wall -Wextra -march=native
 
 c_sources 	= main.cpp mandelbrot.cpp window_handler.cpp
 c_src_w_dir = $(addprefix $(SRCDIR), $(c_sources))
@@ -18,7 +18,7 @@ $(FILENAME): $(C_OBJS)
 
 $(OBJDIR)%.o: $(SRCDIR)%.cpp $(headers)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -O3 -c $< -o $@
+	$(CC) $(CFLAGS) -g3 -O3 -c $< -o $@
 
 dump:
 	objdump -d -Mintel $(FILENAME) > $(basename $(FILENAME)).disasm
