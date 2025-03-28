@@ -54,7 +54,7 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
 
                 for (size_t i = 0; i < PACK_SIZE; i++) n[i] += cmp_res[i];
 
-                int mask = 0;
+                uint64_t mask = 0;
                 for (size_t i = 0; i < PACK_SIZE; i++){
                     mask <<= 1;
                     mask += cmp_res[i];
