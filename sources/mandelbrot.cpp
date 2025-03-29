@@ -21,11 +21,12 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
     const float dx = (right_x - left_x) / sc_width;
     const float dy = (top_y - bottom_y) / sc_height;
 
-    float y0 = bottom_y;
-    for (uint32_t iy = 0; iy < sc_height; iy++, y0 += dy){
-        float x0 = left_x;
+    for (uint32_t iy = 0; iy < sc_height; iy++){
+        float y0 = bottom_y + iy*dy;
 
-        for (uint32_t ix = 0; ix < sc_width; ix++, x0 += dx){
+        for (uint32_t ix = 0; ix < sc_width; ix++){
+            float x0 = left_x + ix*dx;
+
             float x = x0;
             float y = y0;
 
