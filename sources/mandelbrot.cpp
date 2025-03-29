@@ -24,13 +24,12 @@ const f_type MAX_R2   = 100.;
 void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
                     const double left_x, const double right_x, const double bottom_y)
 {
-    // const f_type top_y = ((right_x - left_x) * sc_height) / sc_width + bottom_y;
-
     const f_type dx = (right_x - left_x) / sc_width;
-    // const f_type dy = (top_y - bottom_y) / sc_height;
     const f_type dy = dx;
 
-    const __m128 delta = _mm_set_ps(dx, dx*2, dx*3, dx*4);
+    // reversed for easy storing in the memory
+    const __m128 delta = _mm_set_ps(dx*3, dx*2, dx, 0);
+
     const __m128 max_r2_packed = _mm_set_ps1(MAX_R2);
 
     const __m128i mask_for_n = _mm_set1_epi32(1);
@@ -79,7 +78,6 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
             }
             __m128i * store_addr = (__m128i *)(pixels + iy * sc_width + ix);
             _mm_storeu_si128(store_addr, n);
-            // for (size_t i = 0; i < PACK_SIZE; i++) pixels[iy * sc_width + ix + i] = n[i];
         }
     }
 }
