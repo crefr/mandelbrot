@@ -4,10 +4,10 @@
 #include <stdint.h>
 
 void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
-                    const float left_x, const float right_x, const float bottom_y);
+                    const double left_x, const double right_x, const double bottom_y);
 
 void calcCenteredMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
-                            const float center_x, const float center_y, const float scale);
+                            const double center_x, const double center_y, const double scale);
 
 void numsToColor(uint32_t * nums, uint32_t * colors, size_t len);
 

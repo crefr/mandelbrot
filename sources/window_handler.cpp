@@ -6,14 +6,14 @@
 
 #include "mandelbrot.h"
 
-const float   POS_CHANGE_COEF = 0.1;
-const float SCALE_CHANGE_COEF = 1.1;
+const double   POS_CHANGE_COEF = 0.1;
+const double SCALE_CHANGE_COEF = 1.1;
 
 void runWindow(const uint32_t width, const uint32_t height)
 {
-    float scale = 2./(width);
-    float center_x = -0.5,
-          center_y = 0.;
+    double scale = 2./(width);
+    double center_x = -0.5,
+           center_y = 0.;
 
     sf::RenderWindow window(sf::VideoMode(width, height), "Mandelbrot");
     window.setVerticalSyncEnabled(true);
@@ -40,19 +40,19 @@ void runWindow(const uint32_t width, const uint32_t height)
                 float step = width * scale * POS_CHANGE_COEF;
 
                 switch(event.key.code){
-                    case sf::Keyboard::Up:
+                    case sf::Keyboard::W: case sf::Keyboard::Up:
                         center_y -= step;
                         break;
 
-                    case sf::Keyboard::Down:
+                    case sf::Keyboard::S: case sf::Keyboard::Down:
                         center_y += step;
                         break;
 
-                    case sf::Keyboard::Left:
+                    case sf::Keyboard::A: case sf::Keyboard::Left:
                         center_x -= step;
                         break;
 
-                    case sf::Keyboard::Right:
+                    case sf::Keyboard::D: case sf::Keyboard::Right:
                         center_x += step;
                         break;
 
