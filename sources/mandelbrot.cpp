@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <math.h>
 
+#include <xmmintrin.h>
+
 #include "mandelbrot.h"
 
 // #define BURNING_SHIP
@@ -28,55 +30,56 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
     // const f_type dy = (top_y - bottom_y) / sc_height;
     const f_type dy = dx;
 
+    const __m128 delta = _mm_set_ps(dx, dx*2, dx*3, dx*4);
+    const __m128 max_r2_packed = _mm_set_ps1(MAX_R2);
+
+    const __m128i mask_for_n = _mm_set1_epi32(1);
+
     for (uint32_t iy = 0; iy < sc_height; iy++){
-        f_type y0[PACK_SIZE] = {};
-        for (size_t i = 0; i < PACK_SIZE; i++) y0[i] = bottom_y + iy * dy;
+        __m128 y0 = _mm_set_ps1(bottom_y + iy * dy);
 
-        for (uint32_t ix = 0; ix < sc_width; ix += PACK_SIZE){
-            f_type x0[PACK_SIZE] = {};
-            for (size_t i = 0; i < PACK_SIZE; i++) x0[i] = left_x + (ix + i)*dx;
+        for (uint32_t ix = 0; ix < sc_width; ix += (128 / 8 / sizeof(float))){
+            __m128 x0 = _mm_set_ps1(left_x + ix * dx);
+            x0 = _mm_add_ps(x0, delta);
 
-            f_type x[PACK_SIZE] = {};
-            for (size_t i = 0; i < PACK_SIZE; i++) x[i] = x0[i];
+            __m128 x = x0;
+            __m128 y = y0;
 
-            f_type y[PACK_SIZE] = {};
-            for (size_t i = 0; i < PACK_SIZE; i++) y[i] = y0[i];
-
-            int n[PACK_SIZE] = {0};
+            __m128i n = _mm_set1_epi32(0);
 
             for (uint32_t iteration = 0; iteration < MAX_N; iteration++){
-                f_type x2[PACK_SIZE] = {};
-                for (size_t i = 0; i < PACK_SIZE; i++) x2[i] = x[i] * x[i];
+                __m128 x2 = _mm_mul_ps(x, x);
+                __m128 y2 = _mm_mul_ps(y, y);
 
-                f_type y2[PACK_SIZE] = {};
-                for (size_t i = 0; i < PACK_SIZE; i++) y2[i] = y[i] * y[i];
+                __m128 _2xy     = _mm_mul_ps(x, y);
+                __m128 packed_2 = _mm_set_ps1(2.);
+                _2xy = _mm_mul_ps(_2xy, packed_2);
 
-                f_type _2xy[PACK_SIZE] = {};
-                for (size_t i = 0; i < PACK_SIZE; i++) _2xy[i] = 2 * x[i] * y[i];
+                __m128 r2 = _mm_add_ps(x2, y2);
 
-                int cmp_res[PACK_SIZE] = {};
-                for (size_t i = 0; i < PACK_SIZE; i++) cmp_res[i] = (x2[i] + y2[i] < MAX_R2) ? 1 : 0;
-
-                for (size_t i = 0; i < PACK_SIZE; i++) n[i] += cmp_res[i];
-
-                uint64_t mask = 0;
-                for (size_t i = 0; i < PACK_SIZE; i++){
-                    mask <<= 1;
-                    mask += cmp_res[i];
-                }
+                __m128 cmp_res = _mm_cmple_ps(r2, max_r2_packed);
+                int mask = _mm_movemask_ps(cmp_res);
 
                 if (!mask)
                     break;
+
+                __m128i delta_n = _mm_castps_si128(cmp_res);
+                delta_n = _mm_and_si128(delta_n, mask_for_n);
+
+                n = _mm_add_epi32(n, delta_n);
+
+                __m128 sub_x2_y2 = _mm_sub_ps(x2, y2);
+                x = _mm_add_ps(sub_x2_y2, x0);
 
                 #ifdef BURNING_SHIP
                     for (size_t i = 0; i < PACK_SIZE; i++) _2xy[i] = fabs(_2xy[i]);
                 #endif
 
-                for (size_t i = 0; i < PACK_SIZE; i++) x[i] = x2[i] - y2[i] + x0[i];
-                for (size_t i = 0; i < PACK_SIZE; i++) y[i] = _2xy[i] + y0[i];
+                y = _mm_add_ps(_2xy, y0);
             }
-
-            for (size_t i = 0; i < PACK_SIZE; i++) pixels[iy * sc_width + ix + i] = n[i];
+            __m128i * store_addr = (__m128i *)(pixels + iy * sc_width + ix);
+            _mm_storeu_si128(store_addr, n);
+            // for (size_t i = 0; i < PACK_SIZE; i++) pixels[iy * sc_width + ix + i] = n[i];
         }
     }
 }
