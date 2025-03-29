@@ -7,9 +7,7 @@
 
 #include "mandelbrot.h"
 
-// #define BURNING_SHIP
-
-#define PACK_SIZE 32
+#define BURNING_SHIP
 
 typedef double f_type;
 
@@ -33,6 +31,10 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
     const __m128 max_r2_packed = _mm_set_ps1(MAX_R2);
 
     const __m128i mask_for_n = _mm_set1_epi32(1);
+
+    #ifdef BURNING_SHIP
+    const __m128 abs_mask = _mm_castsi128_ps(_mm_set1_epi32(~(1 << 31)));
+    #endif
 
     for (uint32_t iy = 0; iy < sc_height; iy++){
         __m128 y0 = _mm_set_ps1(bottom_y + iy * dy);
@@ -71,7 +73,7 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
                 x = _mm_add_ps(sub_x2_y2, x0);
 
                 #ifdef BURNING_SHIP
-                    for (size_t i = 0; i < PACK_SIZE; i++) _2xy[i] = fabs(_2xy[i]);
+                    _2xy = _mm_and_ps(_2xy, abs_mask);
                 #endif
 
                 y = _mm_add_ps(_2xy, y0);
