@@ -10,6 +10,61 @@
 
 // #define BURNING_SHIP
 
+#define AVX_ON
+
+#ifdef AVX_ON
+    typedef __m256 mXXX;
+    typedef __m256i mXXXi;
+
+    #define PACK_SIZE 256
+
+    #define mm_set_ps           _mm256_set_ps
+    #define mm_set1_ps          _mm256_set1_ps
+
+    #define mm_castsiXXX_ps     _mm256_castsi256_ps
+    #define mm_castps_siXXX     _mm256_castps_si256
+
+    #define mm_add_ps           _mm256_add_ps
+    #define mm_mul_ps           _mm256_mul_ps
+    #define mm_sub_ps           _mm256_sub_ps
+    #define mm_and_ps           _mm256_and_ps
+
+    #define mm_cmple_ps(a, b)   _mm256_cmp_ps((a), (b), _CMP_LE_OS)
+
+    #define mm_movemask_ps      _mm256_movemask_ps
+    #define mm_movemask_ps      _mm256_movemask_ps
+
+    #define mm_set1_epi32       _mm256_set1_epi32
+    #define mm_add_epi32        _mm256_add_epi32
+    #define mm_storeu_siXXX     _mm256_storeu_si256
+    #define mm_and_siXXX        _mm256_and_si256
+#else
+    typedef __m128  mXXX;
+    typedef __m128i mXXXi;
+
+    #define PACK_SIZE 128
+
+    #define mm_set_ps           _mm_set_ps
+    #define mm_set1_ps          _mm_set1_ps
+
+    #define mm_castsiXXX_ps     _mm_castsi128_ps
+    #define mm_castps_siXXX     _mm_castps_si128
+
+    #define mm_add_ps           _mm_add_ps
+    #define mm_mul_ps           _mm_mul_ps
+    #define mm_sub_ps           _mm_sub_ps
+    #define mm_and_ps           _mm_and_ps
+
+    #define mm_cmple_ps         _mm_cmple_ps
+    #define mm_movemask_ps      _mm_movemask_ps
+    #define mm_movemask_ps      _mm_movemask_ps
+
+    #define mm_set1_epi32       _mm_set1_epi32
+    #define mm_add_epi32        _mm_add_epi32
+    #define mm_storeu_siXXX     _mm_storeu_si128
+    #define mm_and_siXXX        _mm_and_si128
+#endif
+
 // typedef float f_type;
 
 const uint32_t MAX_N = 256;
@@ -27,127 +82,64 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
     const float dy = dx;
 
     // reversed for easy storing in the memory
-    const __m128 delta = _mm_set_ps(dx*3, dx*2, dx, 0);
-
-    const __m128 max_r2_packed = _mm_set_ps1(MAX_R2);
-
-    const __m128i mask_for_n = _mm_set1_epi32(1);
-
-    #ifdef BURNING_SHIP
-    const __m128 abs_mask = _mm_castsi128_ps(_mm_set1_epi32(~(1 << 31)));
-    #endif
-
-    for (uint32_t iy = 0; iy < sc_height; iy++){
-        __m128 y0 = _mm_set_ps1(bottom_y + iy * dy);
-
-        for (uint32_t ix = 0; ix < sc_width; ix += (128 / 8 / sizeof(float))){
-            __m128 x0 = _mm_set_ps1(left_x + ix * dx);
-            x0 = _mm_add_ps(x0, delta);
-
-            __m128 x = x0;
-            __m128 y = y0;
-
-            __m128i n = _mm_set1_epi32(0);
-
-            for (uint32_t iteration = 0; iteration < MAX_N; iteration++){
-                __m128 x2 = _mm_mul_ps(x, x);
-                __m128 y2 = _mm_mul_ps(y, y);
-
-                __m128 _2xy     = _mm_mul_ps(x, y);
-                __m128 packed_2 = _mm_set_ps1(2.);
-                _2xy = _mm_mul_ps(_2xy, packed_2);
-
-                __m128 r2 = _mm_add_ps(x2, y2);
-
-                __m128 cmp_res = _mm_cmple_ps(r2, max_r2_packed);
-                int mask = _mm_movemask_ps(cmp_res);
-
-                if (!mask)
-                    break;
-
-                __m128i delta_n = _mm_castps_si128(cmp_res);
-                delta_n = _mm_and_si128(delta_n, mask_for_n);
-
-                n = _mm_add_epi32(n, delta_n);
-
-                __m128 sub_x2_y2 = _mm_sub_ps(x2, y2);
-                x = _mm_add_ps(sub_x2_y2, x0);
-
-                #ifdef BURNING_SHIP
-                    _2xy = _mm_and_ps(_2xy, abs_mask);
-                #endif
-
-                y = _mm_add_ps(_2xy, y0);
-            }
-            __m128i * store_addr = (__m128i *)(pixels + iy * sc_width + ix);
-            _mm_storeu_si128(store_addr, n);
-        }
-    }
-}
-
-void calcMandelbrotAVX(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
-                    const double left_x, const double right_x, const double bottom_y)
-{
-    const float dx = (right_x - left_x) / sc_width;
-    const float dy = dx;
-
-    // reversed for easy storing in the memory
+    #ifdef AVX_ON
     const __m256 delta = _mm256_set_ps(dx*7, dx*6, dx*5, dx*4, dx*3, dx*2, dx, 0);
+    #else
+    const __m128 delta = _mm_set_ps(dx*3, dx*2, dx, 0);
+    #endif
 
-    const __m256 max_r2_packed = _mm256_set1_ps(MAX_R2);
+    const mXXX max_r2_packed = mm_set1_ps(MAX_R2);
 
-    const __m256i mask_for_n = _mm256_set1_epi32(1);
+    const mXXXi mask_for_n = mm_set1_epi32(1);
 
     #ifdef BURNING_SHIP
-    const __m256 abs_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~(1 << 31)));
+    const mXXX abs_mask = mm_castsiXXX_ps(mm_set1_epi32(~(1 << 31)));
     #endif
 
     for (uint32_t iy = 0; iy < sc_height; iy++){
-        float y0f = bottom_y + iy * dy;
-        __m256 y0 = _mm256_set1_ps(y0f);
+        mXXX y0 = mm_set1_ps(bottom_y + iy * dy);
 
-        for (uint32_t ix = 0; ix < sc_width; ix += (256 / 8 / sizeof(float))){
-            float x0f = left_x + ix * dx;
-            __m256 x0 = _mm256_set1_ps(x0f);
-            x0 = _mm256_add_ps(x0, delta);
+        for (uint32_t ix = 0; ix < sc_width; ix += (PACK_SIZE / 8 / sizeof(float))){
+            mXXX x0 = mm_set1_ps(left_x + ix * dx);
+            x0 = mm_add_ps(x0, delta);
 
-            __m256 x = x0;
-            __m256 y = y0;
+            mXXX x = x0;
+            mXXX y = y0;
 
-            __m256i n = _mm256_set1_epi32(0);
+            mXXXi n = mm_set1_epi32(0);
 
             for (uint32_t iteration = 0; iteration < MAX_N; iteration++){
-                __m256 x2 = _mm256_mul_ps(x, x);
-                __m256 y2 = _mm256_mul_ps(y, y);
+                mXXX x2 = mm_mul_ps(x, x);
+                mXXX y2 = mm_mul_ps(y, y);
 
-                __m256 _2xy     = _mm256_mul_ps(x, y);
-                __m256 packed_2 = _mm256_set1_ps(2.);
-                _2xy = _mm256_mul_ps(_2xy, packed_2);
+                mXXX _2xy     = mm_mul_ps(x, y);
+                mXXX packed_2 = mm_set1_ps(2.);
+                _2xy = mm_mul_ps(_2xy, packed_2);
 
-                __m256 r2 = _mm256_add_ps(x2, y2);
+                mXXX r2 = mm_add_ps(x2, y2);
 
-                __m256 cmp_res = _mm256_cmp_ps(r2, max_r2_packed, _CMP_LE_OS);
-                int mask = _mm256_movemask_ps(cmp_res);
+                mXXX cmp_res = mm_cmple_ps(r2, max_r2_packed);
+                int mask = mm_movemask_ps(cmp_res);
 
                 if (!mask)
                     break;
 
-                __m256i delta_n = _mm256_castps_si256(cmp_res);
-                delta_n = _mm256_and_si256(delta_n, mask_for_n);
+                mXXXi delta_n = mm_castps_siXXX(cmp_res);
+                delta_n = mm_and_siXXX(delta_n, mask_for_n);
 
-                n = _mm256_add_epi32(n, delta_n);
+                n = mm_add_epi32(n, delta_n);
 
-                __m256 sub_x2_y2 = _mm256_sub_ps(x2, y2);
-                x = _mm256_add_ps(sub_x2_y2, x0);
+                mXXX sub_x2_y2 = mm_sub_ps(x2, y2);
+                x = mm_add_ps(sub_x2_y2, x0);
 
                 #ifdef BURNING_SHIP
-                    _2xy = _mm256_and_ps(_2xy, abs_mask);
+                    _2xy = mm_and_ps(_2xy, abs_mask);
                 #endif
 
-                y = _mm256_add_ps(_2xy, y0);
+                y = mm_add_ps(_2xy, y0);
             }
-            __m256i * store_addr = (__m256i *)(pixels + iy * sc_width + ix);
-            _mm256_storeu_si256(store_addr, n);
+            mXXXi * store_addr = (mXXXi *)(pixels + iy * sc_width + ix);
+            mm_storeu_siXXX(store_addr, n);
         }
     }
 }
@@ -160,7 +152,7 @@ void calcCenteredMandelbrot(uint32_t * pixels, const uint32_t sc_width, const ui
 
     float bottom_y = center_y - sc_height * scale / 2;
 
-    calcMandelbrotAVX(pixels, sc_width, sc_height, left_x, right_x, bottom_y);
+    calcMandelbrot(pixels, sc_width, sc_height, left_x, right_x, bottom_y);
 }
 
 static uint32_t numToColor(const uint32_t num)
