@@ -62,3 +62,24 @@ Or you can measure its calculating speed by adding flag `-t` with num of tests y
 `Mouse wheel down` - less zoom;
 
 
+## Additional
+### Only SSE
+You can turn AVX off and use only SSE by commenting this string at `sources/mandelbrot.cpp`:
+
+```c
+#define AVX_ON
+```
+
+and the compiling it again.
+
+### Burning ship
+You can display Burning Ship fractal instead of Mandelbrot set - uncomment this line at `sources/mandelbrot.cpp`:
+```c
+#define BURNING_SHIP
+```
+
+### GCC auto vectorisation
+At the branch [`gcc_optimized`](https://github.com/crefr/mandelbrot/tree/gcc_optimized) there is a version of the program with dividing calculations into small cycles for better optimisation by `gcc`. It can see where to insert SSE/AVX instructions.
+
+### No optimisation
+At the branch [`no_optimize`](https://github.com/crefr/mandelbrot/tree/no_optimize) you can find version of the program without any optimisations.
