@@ -6,6 +6,7 @@
 
 #include "mandelbrot.h"
 #include "window_handler.h"
+#include "test_mandelbrot.h"
 
 const uint32_t SC_WIDTH  = 1280;
 const uint32_t SC_HEIGHT = 720;
@@ -19,15 +20,12 @@ int main(int argc, char ** argv)
         }
 
         size_t num_of_cycles = atoi(argv[2]);
-        uint32_t * pixels = (uint32_t *)calloc(SC_WIDTH * SC_HEIGHT, sizeof(*pixels));
 
-        clock_t start_time = clock();
-        for (size_t cycle_index = 0; cycle_index < num_of_cycles; cycle_index++){
-            calcCenteredMandelbrot(pixels, SC_WIDTH, SC_HEIGHT, -0.5, 0., 2./(SC_WIDTH));
-        }
-        clock_t end_time = clock();
+        mandelbrot_context_t md = mandelbrotCtor(SC_WIDTH, SC_HEIGHT);
 
-        printf("one frame mean calc time = %lf ms\n", (double)(end_time - start_time) / CLOCKS_PER_SEC * 1000 / num_of_cycles);
+        test_result_t time = testMandelbrot(&md, num_of_cycles);
+
+        printf("one frame mean calc time = (%lf +- %lf) ms\n", time.time, time.sigma);
 
         return 0;
     }

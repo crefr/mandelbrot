@@ -65,20 +65,52 @@
     #define mm_and_siXXX        _mm_and_si128
 #endif
 
-// typedef float f_type;
-
-const uint32_t MAX_N = 256;
 const float MAX_R2   = 100.;
+
+mandelbrot_context_t mandelbrotCtor(const uint32_t width, const uint32_t height)
+{
+    mandelbrot_context_t md = {};
+
+    md.num_pixels   = (uint32_t *)calloc(width * height, sizeof(*(md.num_pixels)));
+    md.color_pixels = (uint32_t *)calloc(width * height, sizeof(*(md.color_pixels)));
+
+    md.scale = DEFAULT_PLOT_WIDTH / width;
+
+    md.center_x = DEFAULT_CENTER_X;
+    md.center_y = DEFAULT_CENTER_Y;
+
+    md.sc_width  = width;
+    md.sc_height = height;
+
+    md.iter_num = DEFAULT_ITER_NUM;
+
+    return md;
+}
+
+void mandelbrotDtor(mandelbrot_context_t * md)
+{
+    free(md->num_pixels);
+    free(md->color_pixels);
+}
+
 
 // p_n = p_{n-1}^2 + p0
 // x_new + iy_new = x^2 + 2xy*i - y^2 + x0 + y0*i
 // x_new = x^2 - y^2 + x0
 // y_new = 2xy + y0
 
-void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
-                    const double left_x, const double right_x, const double bottom_y)
+void calcMandelbrot(mandelbrot_context_t * md)
 {
-    const float dx = (right_x - left_x) / sc_width;
+    const uint32_t sc_width  = md->sc_width;
+    const uint32_t sc_height = md->sc_height;
+    const uint32_t iter_num  = md->iter_num;
+
+    float left_x  = md->center_x - md->sc_width * md->scale / 2;
+    float right_x = md->sc_width * md->scale / 2 + md->center_x;
+
+    float bottom_y = md->center_y - md->sc_height * md->scale / 2;
+
+    const float dx = (right_x - left_x) / md->sc_width;
     const float dy = dx;
 
     // reversed for easy storing in the memory
@@ -108,7 +140,7 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
 
             mXXXi n = mm_set1_epi32(0);
 
-            for (uint32_t iteration = 0; iteration < MAX_N; iteration++){
+            for (uint32_t iteration = 0; iteration < iter_num; iteration++){
                 mXXX x2 = mm_mul_ps(x, x);
                 mXXX y2 = mm_mul_ps(y, y);
 
@@ -138,29 +170,18 @@ void calcMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t s
 
                 y = mm_add_ps(_2xy, y0);
             }
-            mXXXi * store_addr = (mXXXi *)(pixels + iy * sc_width + ix);
+            mXXXi * store_addr = (mXXXi *)(md->num_pixels + iy * sc_width + ix);
             mm_storeu_siXXX(store_addr, n);
         }
     }
 }
 
-void calcCenteredMandelbrot(uint32_t * pixels, const uint32_t sc_width, const uint32_t sc_height,
-                            const double center_x, const double center_y, const double scale)
+static uint32_t numToColor(const uint32_t num, const uint32_t iter_num)
 {
-    float left_x  = center_x - sc_width * scale / 2;
-    float right_x = sc_width * scale / 2 + center_x;
-
-    float bottom_y = center_y - sc_height * scale / 2;
-
-    calcMandelbrot(pixels, sc_width, sc_height, left_x, right_x, bottom_y);
-}
-
-static uint32_t numToColor(const uint32_t num)
-{
-    if (num == MAX_N)
+    if (num == iter_num)
         return 0;
 
-    uint8_t red   = 256 - 256 * num / MAX_N;
+    uint8_t red   = 256 - num;
     uint8_t green = (uint8_t)(128 + 127.* sinf32(10000./(num + 200)));
     uint8_t blue  = (uint8_t)(40. * logf(num));
 
@@ -172,8 +193,16 @@ static uint32_t numToColor(const uint32_t num)
     return color;
 }
 
-void numsToColor(uint32_t * nums, uint32_t * colors, size_t len)
+void numsToColor(const mandelbrot_context_t * md)
 {
-    for (size_t num_index = 0; num_index < len; num_index++)
-        colors[num_index] = numToColor(nums[num_index]);
+    const uint32_t len = md->sc_height * md->sc_width;
+
+    const uint32_t iter_num = md->iter_num;
+
+    uint32_t * color_pixels = md->color_pixels;
+    const uint32_t * num_pixels = md->num_pixels;
+
+    for (uint32_t num_index = 0; num_index < len; num_index++){
+        color_pixels[num_index] = numToColor(num_pixels[num_index], iter_num);
+    }
 }
