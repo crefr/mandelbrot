@@ -4,6 +4,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <string.h>
+#include <assert.h>
 
 #include <xmmintrin.h>
 #include <immintrin.h>
@@ -91,6 +92,8 @@ mandelbrot_context_t mandelbrotCtor(const uint32_t width, const uint32_t height)
 
 void mandelbrotDtor(mandelbrot_context_t * md)
 {
+    assert(md);
+
     free(md->num_pixels);
     free(md->color_pixels);
 }
@@ -102,14 +105,16 @@ void mandelbrotDtor(mandelbrot_context_t * md)
 
 void calcMandelbrot(mandelbrot_context_t * md)
 {
+    assert(md);
+
     const uint32_t sc_width  = md->sc_width;
     const uint32_t sc_height = md->sc_height;
     const uint32_t iter_num  = md->iter_num;
 
-    float left_x  = md->center_x - md->sc_width * md->scale / 2;
-    float right_x = md->sc_width * md->scale / 2 + md->center_x;
+    const float left_x  = md->center_x - md->sc_width * md->scale / 2;
+    const float right_x = md->sc_width * md->scale / 2 + md->center_x;
 
-    float bottom_y = md->center_y - md->sc_height * md->scale / 2;
+    const float bottom_y = md->center_y - md->sc_height * md->scale / 2;
 
     const float dx = (right_x - left_x) / md->sc_width;
     const float dy = dx;
@@ -179,6 +184,8 @@ void calcMandelbrot(mandelbrot_context_t * md)
 
 static void * threadCalcMandelbrot(void * md_ptr)
 {
+    assert(md_ptr);
+
     mandelbrot_context_t * md = (mandelbrot_context_t *)md_ptr;
     calcMandelbrot(md);
 
@@ -187,6 +194,8 @@ static void * threadCalcMandelbrot(void * md_ptr)
 
 void calcMandelbrotMultiThread(mandelbrot_context_t * md, size_t threads_num)
 {
+    assert(md);
+
     const size_t MAX_THREAD_NUM = 32;
 
     mandelbrot_context_t thread_md_context[MAX_THREAD_NUM] = {};
@@ -233,6 +242,8 @@ static uint32_t numToColor(const uint32_t num, const uint32_t iter_num)
 
 void numsToColor(const mandelbrot_context_t * md)
 {
+    assert(md);
+
     const uint32_t len = md->sc_height * md->sc_width;
 
     const uint32_t iter_num = md->iter_num;

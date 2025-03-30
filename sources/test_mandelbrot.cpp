@@ -2,12 +2,16 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <assert.h>
 
 #include "test_mandelbrot.h"
 #include "mandelbrot.h"
 
 test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md),  mandelbrot_context_t * md, const size_t num_of_cycles)
 {
+    assert(mandelFunction);
+    assert(md);
+
     double sum_of_T  = 0;
     double sum_of_T2 = 0;
 

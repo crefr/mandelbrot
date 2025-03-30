@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <assert.h>
 
 #include <SFML/Graphics.hpp>
 
@@ -83,6 +84,8 @@ void runWindow(const uint32_t width, const uint32_t height)
 
 static void handlePressedKey(sf::Keyboard::Key pressed_key_code, mandelbrot_context_t * md)
 {
+    assert(md);
+
     float step = md->sc_width * md->scale * POS_CHANGE_COEF;
 
     switch(pressed_key_code){
@@ -133,6 +136,9 @@ static void handlePressedKey(sf::Keyboard::Key pressed_key_code, mandelbrot_cont
 
 static void savePositionToFile(const char * file_name, mandelbrot_context_t * md)
 {
+    assert(file_name);
+    assert(md);
+
     FILE * pos_file = fopen(file_name, "w");
 
     if (! pos_file){
@@ -152,6 +158,9 @@ static void savePositionToFile(const char * file_name, mandelbrot_context_t * md
 
 static void readPositionFromFile(const char * file_name, mandelbrot_context_t * md)
 {
+    assert(file_name);
+    assert(md);
+
     FILE * pos_file = fopen(file_name, "r");
 
     if (! pos_file){
