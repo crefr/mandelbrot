@@ -25,6 +25,8 @@ void mandelbrotDtor(mandelbrot_context_t * md);
 
 void calcMandelbrot(mandelbrot_context_t * md);
 
+void calcMandelbrotMultiThread(mandelbrot_context_t * md, size_t threads_num);
+
 void numsToColor(const mandelbrot_context_t * md);
 
 

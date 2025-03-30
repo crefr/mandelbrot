@@ -8,6 +8,6 @@ typedef struct {
     double sigma;
 } test_result_t;
 
-test_result_t testMandelbrot(mandelbrot_context_t * md, const size_t num_of_cycles);
+test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md),  mandelbrot_context_t * md, const size_t num_of_cycles);
 
 #endif

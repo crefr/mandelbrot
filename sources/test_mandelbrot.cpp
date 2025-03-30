@@ -6,14 +6,15 @@
 #include "test_mandelbrot.h"
 #include "mandelbrot.h"
 
-test_result_t testMandelbrot(mandelbrot_context_t * md, const size_t num_of_cycles)
+test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md),  mandelbrot_context_t * md, const size_t num_of_cycles)
 {
     double sum_of_T  = 0;
     double sum_of_T2 = 0;
 
     for (size_t cycle_index = 0; cycle_index < num_of_cycles; cycle_index++){
         clock_t start_time = clock();
-        calcMandelbrot(md);
+        // mandelFunction(md);
+        calcMandelbrotMultiThread(md, 8);
         clock_t end_time = clock();
 
         double test_time = ((double)(end_time - start_time )) * 1000 / CLOCKS_PER_SEC;

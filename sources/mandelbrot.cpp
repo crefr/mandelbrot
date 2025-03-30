@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
+#include <pthread.h>
+#include <string.h>
 
 #include <xmmintrin.h>
 #include <immintrin.h>
@@ -93,7 +95,6 @@ void mandelbrotDtor(mandelbrot_context_t * md)
     free(md->color_pixels);
 }
 
-
 // p_n = p_{n-1}^2 + p0
 // x_new + iy_new = x^2 + 2xy*i - y^2 + x0 + y0*i
 // x_new = x^2 - y^2 + x0
@@ -174,6 +175,42 @@ void calcMandelbrot(mandelbrot_context_t * md)
             mm_storeu_siXXX(store_addr, n);
         }
     }
+}
+
+static void * threadCalcMandelbrot(void * md_ptr)
+{
+    mandelbrot_context_t * md = (mandelbrot_context_t *)md_ptr;
+    calcMandelbrot(md);
+
+    return NULL;
+}
+
+void calcMandelbrotMultiThread(mandelbrot_context_t * md, size_t threads_num)
+{
+    const size_t MAX_THREAD_NUM = 32;
+
+    mandelbrot_context_t * thread_md_context = (mandelbrot_context_t *)calloc(threads_num, sizeof(*thread_md_context));
+    pthread_t threads[MAX_THREAD_NUM] = {};
+
+    size_t rows_per_thread = md->sc_height / threads_num;
+    size_t pixels_per_thread = rows_per_thread * md->sc_width;
+
+    for (size_t thread_index = 0; thread_index < threads_num; thread_index++){
+        memcpy(thread_md_context + thread_index, md, sizeof(mandelbrot_context_t));
+
+        thread_md_context[thread_index].color_pixels = NULL;
+        thread_md_context[thread_index].sc_height = rows_per_thread;
+        thread_md_context[thread_index].center_y += ((double)(rows_per_thread/2 * (2 * thread_index + 1)) - md->sc_height / 2) * md->scale;
+        thread_md_context[thread_index].num_pixels += pixels_per_thread * thread_index;
+
+        pthread_create(threads + thread_index, NULL, threadCalcMandelbrot, thread_md_context + thread_index);
+    }
+
+    for (size_t thread_index = 0; thread_index < threads_num; thread_index++){
+        pthread_join(threads[thread_index], NULL);
+    }
+
+    free(thread_md_context);
 }
 
 static uint32_t numToColor(const uint32_t num, const uint32_t iter_num)
