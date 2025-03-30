@@ -82,14 +82,14 @@ void runWindow(const uint32_t width, const uint32_t height)
         clock_gettime(CLOCK_MONOTONIC, &calc_end);
 
         double calc_time = 1000 * (calc_end.tv_sec - calc_start.tv_sec) + (calc_end.tv_nsec - calc_start.tv_nsec) / 1e6;
-
         printf("one frame calc time = %lf ms\n", calc_time);
 
-//         calc_start = clock();
+        clock_gettime(CLOCK_MONOTONIC, &calc_start);
         numsToColor(&md);
-//         calc_end   = clock();
-//
-//         printf("one frame coloring time = %lf ms\n", (double)(calc_end - calc_start) / CLOCKS_PER_SEC * 1000);
+        clock_gettime(CLOCK_MONOTONIC, &calc_end);
+
+        calc_time = 1000 * (calc_end.tv_sec - calc_start.tv_sec) + (calc_end.tv_nsec - calc_start.tv_nsec) / 1e6;
+        printf("one frame coloring time = %lf ms\n", calc_time);
 
         mandelbrot_texture.update((uint8_t *)md.color_pixels);
 

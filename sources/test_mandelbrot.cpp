@@ -12,12 +12,14 @@ test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md), 
     double sum_of_T2 = 0;
 
     for (size_t cycle_index = 0; cycle_index < num_of_cycles; cycle_index++){
-        clock_t start_time = clock();
-        // mandelFunction(md);
-        calcMandelbrotMultiThread(md, 8);
-        clock_t end_time = clock();
+        struct timespec calc_start = {};
+        struct timespec calc_end = {};
 
-        double test_time = ((double)(end_time - start_time )) * 1000 / CLOCKS_PER_SEC;
+        clock_gettime(CLOCK_MONOTONIC, &calc_start);
+        mandelFunction(md);
+        clock_gettime(CLOCK_MONOTONIC, &calc_end);
+
+        double test_time = 1000 * (calc_end.tv_sec - calc_start.tv_sec) + (calc_end.tv_nsec - calc_start.tv_nsec) / 1e6;
 
         sum_of_T  += test_time;
         sum_of_T2 += test_time * test_time;
@@ -34,4 +36,9 @@ test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md), 
     };
 
     return result;
+}
+
+void calcMandelbrot8Threads(mandelbrot_context_t * md)
+{
+    calcMandelbrotMultiThread(md, 8);
 }

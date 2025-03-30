@@ -23,7 +23,7 @@ int main(int argc, char ** argv)
 
         mandelbrot_context_t md = mandelbrotCtor(SC_WIDTH, SC_HEIGHT);
 
-        test_result_t time = testMandelbrot(calcMandelbrot, &md, num_of_cycles);
+        test_result_t time = testMandelbrot(calcMandelbrot8Threads, &md, num_of_cycles);
 
         printf("one frame mean calc time = (%lf +- %lf) ms\n", time.time, time.sigma);
 

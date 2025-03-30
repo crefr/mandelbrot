@@ -189,18 +189,21 @@ void calcMandelbrotMultiThread(mandelbrot_context_t * md, size_t threads_num)
 {
     const size_t MAX_THREAD_NUM = 32;
 
-    mandelbrot_context_t * thread_md_context = (mandelbrot_context_t *)calloc(threads_num, sizeof(*thread_md_context));
+    mandelbrot_context_t thread_md_context[MAX_THREAD_NUM] = {};
     pthread_t threads[MAX_THREAD_NUM] = {};
 
     size_t rows_per_thread = md->sc_height / threads_num;
     size_t pixels_per_thread = rows_per_thread * md->sc_width;
+
+    double rows_div_2_scale   = rows_per_thread * md->scale / 2;
+    double height_div_2_scale = md->sc_height * md->scale / 2;
 
     for (size_t thread_index = 0; thread_index < threads_num; thread_index++){
         memcpy(thread_md_context + thread_index, md, sizeof(mandelbrot_context_t));
 
         thread_md_context[thread_index].color_pixels = NULL;
         thread_md_context[thread_index].sc_height = rows_per_thread;
-        thread_md_context[thread_index].center_y += ((double)(rows_per_thread/2 * (2 * thread_index + 1)) - md->sc_height / 2) * md->scale;
+        thread_md_context[thread_index].center_y += rows_div_2_scale * (2*thread_index + 1) - height_div_2_scale;
         thread_md_context[thread_index].num_pixels += pixels_per_thread * thread_index;
 
         pthread_create(threads + thread_index, NULL, threadCalcMandelbrot, thread_md_context + thread_index);
@@ -209,8 +212,6 @@ void calcMandelbrotMultiThread(mandelbrot_context_t * md, size_t threads_num)
     for (size_t thread_index = 0; thread_index < threads_num; thread_index++){
         pthread_join(threads[thread_index], NULL);
     }
-
-    free(thread_md_context);
 }
 
 static uint32_t numToColor(const uint32_t num, const uint32_t iter_num)

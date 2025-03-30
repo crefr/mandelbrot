@@ -10,4 +10,6 @@ typedef struct {
 
 test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md),  mandelbrot_context_t * md, const size_t num_of_cycles);
 
+void calcMandelbrot8Threads(mandelbrot_context_t * md);
+
 #endif
