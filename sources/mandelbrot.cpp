@@ -11,7 +11,7 @@
 
 #include "mandelbrot.h"
 
-// #define BURNING_SHIP
+#define BURNING_SHIP
 
 #define AVX_ON
 
