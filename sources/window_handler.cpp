@@ -65,7 +65,8 @@ void runWindow(const uint32_t width, const uint32_t height)
 
         /***************************/
         printf("one frame calc time = ");
-        PRINT_TIME(calcMandelbrotMultiThread(&md, 8));
+        // PRINT_TIME(calcMandelbrotMultiThread(&md, 8));
+        PRINT_TIME(calcMandelbrotGCCoptimized(&md));
 
         printf("one frame coloring time = ");
         PRINT_TIME(numsToColor(&md));
