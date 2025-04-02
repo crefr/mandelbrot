@@ -21,7 +21,7 @@ do {                                                                            
     function;                                                                                                   \
     clock_gettime(CLOCK_MONOTONIC, &calc_end);                                                                  \
     double calc_time = 1000 * (calc_end.tv_sec - calc_start.tv_sec) + (calc_end.tv_nsec - calc_start.tv_nsec) / 1e6;   \
-    printf("%lf ms\n", calc_time);                                                                              \
+    printf("%lf ms", calc_time);                                                                              \
 } while(0)
 
 static void handlePressedKey(sf::Keyboard::Key pressed_key_code, mandelbrot_context_t * md);
@@ -65,13 +65,16 @@ void runWindow(const uint32_t width, const uint32_t height)
 
         /***************************/
         printf("one frame calc time = ");
-        // PRINT_TIME(calcMandelbrotMultiThread(&md, 8));
-        PRINT_TIME(calcMandelbrot(&md));
+        PRINT_TIME(calcMandelbrotMultiThread(&md, 8));
+        // PRINT_TIME(calcMandelbrotConveyor(&md));
+        // PRINT_TIME(calcMandelbrot(&md));
         // PRINT_TIME(calcMandelbrotGCCoptimized(&md));
         // PRINT_TIME(calcMandelbrotNoOptimization(&md));
+        printf("\n");
 
         printf("one frame coloring time = ");
         PRINT_TIME(numsToColor(&md));
+        printf("\n");
         /***************************/
 
         mandelbrot_texture.update((uint8_t *)md.color_pixels);

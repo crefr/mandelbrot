@@ -11,17 +11,23 @@
 
 #include "mandelbrot.h"
 
-#define BURNING_SHIP
+// #define BURNING_SHIP
 
 #define GCC_OPT_PACK_SIZE 32
 
+
 #define AVX_ON
+
+// number of intrinsic commands in one pack for better conveyorization
+#define INTRIN_PACK_SIZE 2
 
 #ifdef AVX_ON
     typedef __m256 mXXX;
     typedef __m256i mXXXi;
 
-    #define PACK_SIZE 256
+    // size of ymm register in bytes
+    #define PACK_SIZE 32
+    #define NUMS_IN_PACK (PACK_SIZE / sizeof(float))
 
     #define mm_set_ps           _mm256_set_ps
     #define mm_set1_ps          _mm256_set1_ps
@@ -47,7 +53,9 @@
     typedef __m128  mXXX;
     typedef __m128i mXXXi;
 
-    #define PACK_SIZE 128
+    // size of xmm register in bytes
+    #define PACK_SIZE 16
+    #define NUMS_IN_PACK (PACK_SIZE / sizeof(float))
 
     #define mm_set_ps           _mm_set_ps
     #define mm_set1_ps          _mm_set1_ps
@@ -139,7 +147,7 @@ void calcMandelbrot(mandelbrot_context_t * md)
     for (uint32_t iy = 0; iy < sc_height; iy++){
         mXXX y0 = mm_set1_ps(bottom_y + iy * dy);
 
-        for (uint32_t ix = 0; ix < sc_width; ix += (PACK_SIZE / 8 / sizeof(float))){
+        for (uint32_t ix = 0; ix < sc_width; ix += NUMS_IN_PACK){
             mXXX x0 = mm_set1_ps(left_x + ix * dx);
             x0 = mm_add_ps(x0, delta);
 
@@ -184,12 +192,115 @@ void calcMandelbrot(mandelbrot_context_t * md)
     }
 }
 
+#define INTRIN_CYCLE for (size_t i = 0; i < INTRIN_PACK_SIZE; i++)
+
+void calcMandelbrotConveyor(mandelbrot_context_t * md)
+{
+    assert(md);
+
+    const uint32_t sc_width  = md->sc_width;
+    const uint32_t sc_height = md->sc_height;
+    const uint32_t iter_num  = md->iter_num;
+
+    const float left_x  = md->center_x - md->sc_width * md->scale / 2;
+    const float right_x = md->sc_width * md->scale / 2 + md->center_x;
+
+    const float bottom_y = md->center_y - md->sc_height * md->scale / 2;
+
+    const float dx = (right_x - left_x) / md->sc_width;
+    const float dy = dx;
+
+    // reversed for easy storing in the memory
+    #ifdef AVX_ON
+    const __m256 delta = _mm256_set_ps(dx*7, dx*6, dx*5, dx*4, dx*3, dx*2, dx, 0);
+    #else
+    const __m128 delta = _mm_set_ps(dx*3, dx*2, dx, 0);
+    #endif
+
+    const mXXX max_r2_packed = mm_set1_ps(MAX_R2);
+
+    const mXXXi mask_for_n = mm_set1_epi32(1);
+
+    #ifdef BURNING_SHIP
+    const mXXX abs_mask = mm_castsiXXX_ps(mm_set1_epi32(~(1 << 31)));
+    #endif
+
+    for (uint32_t iy = 0; iy < sc_height; iy++){
+        mXXX y0[INTRIN_PACK_SIZE] = {};
+        INTRIN_CYCLE y0[i] = mm_set1_ps(bottom_y + (iy) * dy);
+
+        for (uint32_t ix = 0; ix < sc_width; ix += NUMS_IN_PACK * INTRIN_PACK_SIZE){
+            mXXX x0[INTRIN_PACK_SIZE] = {};
+            INTRIN_CYCLE x0[i] = mm_set1_ps(left_x + (ix + i * NUMS_IN_PACK) * dx);
+
+            INTRIN_CYCLE x0[i] = mm_add_ps(x0[i], delta);
+
+            mXXX x[INTRIN_PACK_SIZE] = {};
+            INTRIN_CYCLE x[i] = x0[i];
+
+            mXXX y[INTRIN_PACK_SIZE] = {};
+            INTRIN_CYCLE y[i] = y0[i];
+
+            mXXXi n[INTRIN_PACK_SIZE] = {};
+            INTRIN_CYCLE n[i] = mm_set1_epi32(0);
+
+            for (uint32_t iteration = 0; iteration < iter_num; iteration++){
+                mXXX x2[INTRIN_PACK_SIZE] = {};
+                INTRIN_CYCLE x2[i] = mm_mul_ps(x[i], x[i]);
+
+                mXXX y2[INTRIN_PACK_SIZE] = {};
+                INTRIN_CYCLE y2[i] = mm_mul_ps(y[i], y[i]);
+
+                mXXX _2xy[INTRIN_PACK_SIZE] = {};
+                INTRIN_CYCLE _2xy[i] = mm_mul_ps(x[i], y[i]);
+                INTRIN_CYCLE _2xy[i] = mm_add_ps(_2xy[i], _2xy[i]);
+
+                mXXX r2[INTRIN_PACK_SIZE] = {};
+                INTRIN_CYCLE r2[i] = mm_add_ps(x2[i], y2[i]);
+
+                mXXX cmp_res[INTRIN_PACK_SIZE] = {};
+                INTRIN_CYCLE cmp_res[i] = mm_cmple_ps(r2[i], max_r2_packed);
+
+                int continue_calc = 0;
+                INTRIN_CYCLE {
+                    int mask = mm_movemask_ps(cmp_res[i]);
+                    continue_calc |= mask;
+                }
+                if (! continue_calc)
+                    break;
+
+                mXXXi delta_n[INTRIN_PACK_SIZE] = {};
+                INTRIN_CYCLE delta_n[i] = mm_castps_siXXX(cmp_res[i]);
+                INTRIN_CYCLE delta_n[i] = mm_and_siXXX(delta_n[i], mask_for_n);
+
+                INTRIN_CYCLE n[i] = mm_add_epi32(n[i], delta_n[i]);
+
+                mXXX sub_x2_y2[INTRIN_PACK_SIZE] = {};
+                INTRIN_CYCLE sub_x2_y2[i] = mm_sub_ps(x2[i], y2[i]);
+
+                INTRIN_CYCLE x[i] = mm_add_ps(sub_x2_y2[i], x0[i]);
+
+                #ifdef BURNING_SHIP
+                    INTRIN_CYCLE _2xy[i] = mm_and_ps(_2xy[i], abs_mask);
+                #endif
+
+                INTRIN_CYCLE y[i] = mm_add_ps(_2xy[i], y0[i]);
+            }
+
+            INTRIN_CYCLE {
+                mXXXi * store_addr = (mXXXi *)(md->num_pixels + iy * sc_width + ix + i * NUMS_IN_PACK);
+                mm_storeu_siXXX(store_addr, n[i]);
+            }
+        }
+    }
+}
+
 static void * threadCalcMandelbrot(void * md_ptr)
 {
     assert(md_ptr);
 
     mandelbrot_context_t * md = (mandelbrot_context_t *)md_ptr;
-    calcMandelbrot(md);
+    calcMandelbrotConveyor(md);
 
     return NULL;
 }
