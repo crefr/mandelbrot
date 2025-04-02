@@ -296,6 +296,48 @@ void calcMandelbrotGCCoptimized(mandelbrot_context_t * md)
     }
 }
 
+void calcMandelbrotNoOptimization(mandelbrot_context_t * md)
+{
+    const uint32_t sc_width  = md->sc_width;
+    const uint32_t sc_height = md->sc_height;
+    const uint32_t iter_num  = md->iter_num;
+
+    const float left_x  = md->center_x - md->sc_width * md->scale / 2;
+    const float right_x = md->sc_width * md->scale / 2 + md->center_x;
+
+    const float bottom_y = md->center_y - md->sc_height * md->scale / 2;
+
+    const float dx = (right_x - left_x) / md->sc_width;
+    const float dy = dx;
+
+    for (uint32_t iy = 0; iy < sc_height; iy++){
+        float y0 = bottom_y + iy*dy;
+
+        for (uint32_t ix = 0; ix < sc_width; ix++){
+            float x0 = left_x + ix*dx;
+
+            float x = x0;
+            float y = y0;
+
+            uint32_t n = 0;
+            for (; n < iter_num; n++){
+                float x2   = x * x;
+                float y2   = y * y;
+                float _2xy = 2 * x * y;
+
+                if (x2 + y2 > MAX_R2)
+                    break;
+
+                x = x2 - y2 + x0;
+                y = _2xy + y0;
+
+            }
+
+            md->num_pixels[iy * sc_width + ix] = n;
+        }
+    }
+}
+
 
 static uint32_t numToColor(const uint32_t num, const uint32_t iter_num)
 {
