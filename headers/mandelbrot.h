@@ -9,6 +9,16 @@ const float    DEFAULT_CENTER_X   = -0.5;
 const float    DEFAULT_CENTER_Y   = 0.0;
 const uint32_t DEFAULT_ITER_NUM = 256;
 
+// #define BURNING_SHIP
+
+#define GCC_OPT_PACK_SIZE 32
+
+
+#define AVX_ON
+
+// number of intrinsic commands in one pack for better conveyorization
+#define INTRIN_PACK_SIZE 3
+
 typedef struct {
     uint32_t * num_pixels;
     uint32_t * color_pixels;
@@ -20,7 +30,7 @@ typedef struct {
     uint32_t iter_num;
 } mandelbrot_context_t;
 
-/// @brief mandelbrot_context_t constructor
+/// @brief mandelbrot_context_t constructor (fills fields with default values)
 mandelbrot_context_t mandelbrotCtor(const uint32_t width, const uint32_t height);
 
 /// @brief mandelbrot_context_t destructor

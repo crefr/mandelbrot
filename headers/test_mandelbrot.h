@@ -17,4 +17,7 @@ void testMandelbrot(mandelbrot_context_t * md, const size_t measure_time);
 /// @brief shell for calcMandelbrotMultithread for prototype unification
 void calcMandelbrot8Threads(mandelbrot_context_t * md);
 
+/// @brief prints main information about this session
+void printOptionsInfo(mandelbrot_context_t * md);
+
 #endif

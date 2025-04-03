@@ -11,16 +11,6 @@
 
 #include "mandelbrot.h"
 
-// #define BURNING_SHIP
-
-#define GCC_OPT_PACK_SIZE 32
-
-
-#define AVX_ON
-
-// number of intrinsic commands in one pack for better conveyorization
-#define INTRIN_PACK_SIZE 3
-
 #ifdef AVX_ON
     typedef __m256 mXXX;
     typedef __m256i mXXXi;

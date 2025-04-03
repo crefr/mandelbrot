@@ -23,6 +23,8 @@ int main(int argc, char ** argv)
 
         mandelbrot_context_t md = mandelbrotCtor(SC_WIDTH, SC_HEIGHT);
 
+        printOptionsInfo(&md);
+
         printf("--------TESTING (%u x %u)--------\n", SC_WIDTH, SC_HEIGHT);
         testMandelbrot(&md, measure_time);
 

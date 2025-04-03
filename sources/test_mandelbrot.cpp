@@ -73,6 +73,26 @@ void testMandelbrot(mandelbrot_context_t * md, const size_t measure_time)
     }
 }
 
+void printOptionsInfo(mandelbrot_context_t * md)
+{
+    printf("----------INFO----------\n");
+    printf("-> center x     = %f\n", md->center_x);
+    printf("-> center y     = %f\n", md->center_y);
+    printf("-> plot width   = %f\n", md->scale * md->sc_width);
+    printf("-> iter num     = %u\n", md->iter_num);
+
+  #ifdef BURNING_SHIP
+    printf("-> BURNING_SHIP IS DEFINED\n");
+  #endif
+
+  #ifdef AVX_ON
+    printf("-> AVX_ON IS DEFINED\n");
+  #endif
+
+    printf("-> intrin pack size = %d\n", INTRIN_PACK_SIZE);
+    printf("\n");
+}
+
 void calcMandelbrot8Threads(mandelbrot_context_t * md)
 {
     calcMandelbrotMultiThread(md, 8);
