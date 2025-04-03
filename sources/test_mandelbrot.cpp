@@ -7,15 +7,16 @@
 #include "test_mandelbrot.h"
 #include "mandelbrot.h"
 
-test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md),  mandelbrot_context_t * md, const size_t num_of_cycles)
+test_result_t testMandelbrotFunc(void (*mandelFunction)(mandelbrot_context_t * md),  mandelbrot_context_t * md, const size_t measure_time)
 {
     assert(mandelFunction);
     assert(md);
 
     double sum_of_T  = 0;
     double sum_of_T2 = 0;
+    size_t cycle_num = 0;
 
-    for (size_t cycle_index = 0; cycle_index < num_of_cycles; cycle_index++){
+    while (sum_of_T < measure_time){
         struct timespec calc_start = {};
         struct timespec calc_end = {};
 
@@ -27,12 +28,13 @@ test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md), 
 
         sum_of_T  += test_time;
         sum_of_T2 += test_time * test_time;
+        cycle_num++;
     }
 
-    double mean_T  = sum_of_T / num_of_cycles;
-    double mean_T2 = sum_of_T2 / num_of_cycles;
+    double mean_T  = sum_of_T / cycle_num;
+    double mean_T2 = sum_of_T2 / cycle_num;
 
-    double sigma_T = sqrt((mean_T2 - mean_T * mean_T) / num_of_cycles);
+    double sigma_T = sqrt((mean_T2 - mean_T * mean_T) / cycle_num);
 
     test_result_t result = {
         .time  = mean_T,
@@ -40,6 +42,35 @@ test_result_t testMandelbrot(void (*mandelFunction)(mandelbrot_context_t * md), 
     };
 
     return result;
+}
+
+static void printFuncTime(void (*mandelFunction)(mandelbrot_context_t * md), mandelbrot_context_t * md, const size_t measure_time)
+{
+    test_result_t time = testMandelbrotFunc(mandelFunction, md, measure_time);
+    printf("mean calc time = (%lf +- %lf) ms\n", time.time, time.sigma);
+}
+
+void testMandelbrot(mandelbrot_context_t * md, const size_t measure_time)
+{
+    struct test_func {
+        const char * func_name;
+        void (*mandelFunction)(mandelbrot_context_t * md);
+    };
+
+    const struct test_func tests[] = {
+        {"NON-OPTIMIZED VERSION", calcMandelbrotNoOptimization  },
+        {"COMPILER OPTIMIZATION", calcMandelbrotGCCoptimized    },
+        {"INTRINSICS"           , calcMandelbrot                },
+        {"INTRINSICS + CONVEYOR", calcMandelbrotConveyor        },
+        {"INTRINSICS 8 THREADS ", calcMandelbrot8Threads        }
+    };
+    const size_t test_num = sizeof(tests) / sizeof(*tests);
+
+    for (size_t test_index = 0; test_index < test_num; test_index++){
+        printf("%s\n", tests[test_index].func_name);
+        printFuncTime(tests[test_index].mandelFunction, md, measure_time);
+        printf("\n");
+    }
 }
 
 void calcMandelbrot8Threads(mandelbrot_context_t * md)

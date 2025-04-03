@@ -19,13 +19,12 @@ int main(int argc, char ** argv)
             return 1;
         }
 
-        size_t num_of_cycles = atoi(argv[2]);
+        size_t measure_time = atoi(argv[2]);
 
         mandelbrot_context_t md = mandelbrotCtor(SC_WIDTH, SC_HEIGHT);
 
-        test_result_t time = testMandelbrot(calcMandelbrot8Threads, &md, num_of_cycles);
-
-        printf("one frame mean calc time = (%lf +- %lf) ms\n", time.time, time.sigma);
+        printf("--------TESTING (%u x %u)--------\n", SC_WIDTH, SC_HEIGHT);
+        testMandelbrot(&md, measure_time);
 
         return 0;
     }

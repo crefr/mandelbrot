@@ -12,6 +12,11 @@ const double SCALE_CHANGE_COEF = 1.1;
 const uint32_t ITER_NUM_DELTA = 128;
 
 const char * POS_FILE_NAME = "position.txt";
+const char * POS_RECORD_FORMAT =
+        "center_x   = %lf\n"
+        "center_y   = %lf\n"
+        "iter_num   = %u\n"
+        "plot_width = %lf\n\n";
 
 #define PRINT_TIME(function)                                                                                    \
 do {                                                                                                            \
@@ -152,11 +157,7 @@ static void savePositionToFile(const char * file_name, mandelbrot_context_t * md
         return;
     }
 
-    fprintf(pos_file,
-        "center_x   = %lf\n"
-        "center_y   = %lf\n"
-        "iter_num   = %u\n"
-        "plot_width = %lf\n\n",
+    fprintf(pos_file, POS_RECORD_FORMAT,
         md->center_x, md->center_y, md->iter_num, md->scale * md->sc_width);
 
     fclose(pos_file);
@@ -179,11 +180,7 @@ static void readPositionFromFile(const char * file_name, mandelbrot_context_t * 
     uint32_t iter_num = 0;
     double plot_width = 0;
 
-    int scan_result  = fscanf(pos_file,
-        "center_x   = %lf\n"
-        "center_y   = %lf\n"
-        "iter_num   = %u\n"
-        "plot_width = %lf\n\n",
+    int scan_result  = fscanf(pos_file, POS_RECORD_FORMAT,
         &center_x, &center_y, &iter_num, &plot_width);
 
     if (scan_result != 4){
