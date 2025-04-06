@@ -72,14 +72,14 @@ Program was compiled with g++  11.4.0 compiler with following options:
 + SIMD instructions pack size (in SIMD conveyor) - 3
 
 
-| Testing mode                      | Result, ms         | Relative boost    |
-| ------------                      | ------             | ---               |
-| No optimizations                  | $ 602 \pm 3 $      |  x 1              |
-| Compiler auto vectorization       | $ 49.6 \pm 0.2 $   |  x 12.1           |
-| SIMD                              | $ 82.8 \pm 0.1 $   |  x 7.3            |
-| SIMD with conveyor                | $ 35.2 \pm 0.1 $   |  **x 17.1**       |
+| Testing mode                      | Result, ms    | Relative boost    |
+| ------------                      | ------        | ---               |
+| No optimizations                  | 602 ± 3       |  x 1              |
+| Compiler auto vectorization       | 49.6 ± 0.2    |  x 12.1           |
+| SIMD                              | 82.8 ± 0.1    |  x 7.3            |
+| SIMD with conveyor                | 35.2 ± 0.1    |  **x 17.1**       |
 
-Also multithread version was tested with 8 threads but its increase relatively to one-thread "SIMD with conveyor" is only 2.9 times because of the bas realisation.
+Also multithread version was tested with 8 threads but its increase relatively to one-thread "SIMD with conveyor" is only 2.9 times because of the bad realisation.
 
 ### Analysis
 SIMD instructions increased performance by 7.3 times as expected (ymm register size is 256 bit = 8 floats). But with more effective conveyorization result is better by 2.4 times more.
