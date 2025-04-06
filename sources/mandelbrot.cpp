@@ -70,12 +70,18 @@
 
 const float MAX_R2   = 100.;
 
+static void calculateColorTable(const mandelbrot_context_t * md);
+
+
 mandelbrot_context_t mandelbrotCtor(const uint32_t width, const uint32_t height)
 {
     mandelbrot_context_t md = {};
 
     md.num_pixels   = (uint32_t *)calloc(width * height, sizeof(*(md.num_pixels)));
     md.color_pixels = (uint32_t *)calloc(width * height, sizeof(*(md.color_pixels)));
+
+    md.color_table  = (uint32_t *)calloc(COLOR_TABLE_LEN, sizeof(*(md.color_table)));
+    calculateColorTable(&md);
 
     md.scale = DEFAULT_PLOT_WIDTH / width;
 
@@ -460,18 +466,31 @@ static uint32_t numToColor(const uint32_t num, const uint32_t iter_num)
     return color;
 }
 
+static void calculateColorTable(const mandelbrot_context_t * md)
+{
+    assert(md);
+
+    for (size_t col_index = 0; col_index < COLOR_TABLE_LEN; col_index++){
+        md->color_table[col_index] = numToColor(col_index, md->iter_num);
+    }
+}
+
 void numsToColor(const mandelbrot_context_t * md)
 {
     assert(md);
 
     const uint32_t len = md->sc_height * md->sc_width;
-
     const uint32_t iter_num = md->iter_num;
 
     uint32_t * color_pixels = md->color_pixels;
-    const uint32_t * num_pixels = md->num_pixels;
+    uint32_t * color_table  = md->color_table;
+
+    uint32_t * num_pixels   = md->num_pixels;
 
     for (uint32_t num_index = 0; num_index < len; num_index++){
-        color_pixels[num_index] = numToColor(num_pixels[num_index], iter_num);
+        if (num_pixels[num_index] == iter_num)
+            color_pixels[num_index] = 0;
+        else
+            color_pixels[num_index] = color_table[num_pixels[num_index] % COLOR_TABLE_LEN];
     }
 }

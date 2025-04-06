@@ -19,15 +19,20 @@ const uint32_t DEFAULT_ITER_NUM = 256;
 // number of intrinsic commands in one pack for better conveyorization
 #define INTRIN_PACK_SIZE 3
 
+const size_t COLOR_TABLE_LEN = 1024;
+
 typedef struct {
     uint32_t * num_pixels;
     uint32_t * color_pixels;
+    uint32_t * color_table;
+
     float scale;
     float center_x;
     float center_y;
+    uint32_t iter_num;
+
     uint32_t sc_width;
     uint32_t sc_height;
-    uint32_t iter_num;
 } mandelbrot_context_t;
 
 /// @brief mandelbrot_context_t constructor (fills fields with default values)
